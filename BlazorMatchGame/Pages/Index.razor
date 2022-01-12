@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using System.Timers
 
 <style>
     .container{
@@ -13,7 +14,7 @@
     }
 </style>
 
-<div class ="container">
+<div class="container">
     <div class="row">
         @for (var animalNumber = 0; animalNumber < shuffledAnimals.Count; animalNumber++)
         {
@@ -29,6 +30,9 @@
     </div>
     <div class="row">
         <h2> Matches found: @matchesFound</h2>
+    </div>
+    <div class="row">
+        <h2> Time : @timeDisplay</h2>
     </div>
 </div>
 
@@ -48,9 +52,14 @@
 
     List<string> shuffledAnimals = new List<string>();
     int matchesFound = 0;
+    Timer timer;
+    int tenthOfSecondsElapsed = 0;
+    string timeDisplay;
 
     protected override void OnInitialized()
     {
+        timer = new Timer(100);
+        timer.Elapsed += Timer_Tick;
         SetUpGame();
 
     }
@@ -62,6 +71,7 @@
             .OrderBy(item => random.Next())
             .ToList();
         matchesFound = 0;
+        tenthOfSecondsElapsed = 0;
     }
 
     string lastAnimalFound = string.Empty;
@@ -69,13 +79,16 @@
 
     private void ButtonClick(string animal, string animalDescription)
     {
-        if(lastAnimalFound == string.Empty)
+        if (lastAnimalFound == string.Empty)
         {
             //First selection of the pair, remember it
             lastAnimalFound = animal;
             lastDescription = animalDescription;
+
+            timer.Start();
         }
-        else if(lastAnimalFound == animal && lastDescription != animalDescription)
+
+        else if (lastAnimalFound == animal && lastDescription != animalDescription)
         {
             //Match found! Reset for next pair
             lastAnimalFound = string.Empty;
@@ -84,8 +97,10 @@
                 .Select(a => a.Replace(animal, string.Empty))
                 .ToList();
             matchesFound++;
-            if(matchesFound == 8)
+            if (matchesFound == 8)
             {
+                timer.Stop();
+                timeDisplay += " - Play Again?";
                 SetUpGame();
             }
         }
@@ -97,6 +112,17 @@
         }
 
 
+    }
+
+    private void Timer_Tick(Object source, ElapsedEventArgs e)
+    {
+        InvokeAsync(() =>
+        {
+            tenthOfSecondsElapsed++;
+            timeDisplay = (tenthOfSecondsElapsed / 10F)
+            .ToString("0.0s");
+            StateHasChanged();
+        });
     }
 
 }
